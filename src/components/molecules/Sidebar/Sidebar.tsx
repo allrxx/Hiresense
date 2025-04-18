@@ -23,12 +23,8 @@ import { Add, Folder, KeyboardArrowDown } from '@mui/icons-material';
 import { useToast } from '@/lib/hooks/useToast';
 
 const navItems = [
-  { title: 'Home', icon: <HomeIcon size={20} />, path: '/' }, // Ensure path is '/'
-  { title: 'Dashboard', icon: <DashboardIcon size={20} />, path: '/dashboard' },
-  //{ title: 'CV Categories', icon: <CategoryIcon size={20} />, path: 'dashboard/categories' },
-  // { title: 'Candidates', icon: <PersonIcon size={20} />, path: 'dashboard/candidates' },
-  //{ title: 'Job Descriptions', icon: <WorkIcon size={20} />, path: 'dashboard/jobs' },
-  //{ title: 'AI Chat', icon: <ChatIcon size={20} />, path: 'dashboard/workspace' },
+  { title: 'Home', icon: <HomeIcon size={18} />, path: '/' }, 
+  { title: 'Dashboard', icon: <DashboardIcon size={18} />, path: '/dashboard' },
 ];
 
 const Sidebar = () => {
@@ -93,14 +89,16 @@ const Sidebar = () => {
         variant="permanent"
         open={isOpen}
         sx={{
-          width: isOpen ? 220 : 80,
+          // Ensure Drawer container width matches paper width when open
+          width: isOpen ? 200 : 80, // Changed 220 to 200
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: isOpen ? 200 : 80,
+            width: isOpen ? 200 : 80, // This remains 200 when open
             transition: "width 0.3s ease-in-out",
             overflowX: "hidden",
+            display: 'flex', // Ensure flex layout for the drawer paper
+            flexDirection: 'column', // Stack children vertically
           },
-
         }}
       >
         {/* Sidebar Header */}
@@ -109,6 +107,7 @@ const Sidebar = () => {
           alignItems: "center",
           justifyContent: "space-between",
           p: 2,
+          flexShrink: 0, // Prevent header from shrinking
         }}>
           <Box sx={{
             display: "flex",
@@ -145,10 +144,33 @@ const Sidebar = () => {
           </CustomButton>
         </Box>
 
-        <Divider />
+        {/* Navigation Menu (Moved Here) */}
+        <List sx={{ flexShrink: 0, py: 1 }}> {/* Add padding */}
+          {navItems.map((item) => (
+            <ListItemButton
+              key={item.title}
+              selected={pathname === item.path}
+              sx={{
+                justifyContent: isOpen ? "flex-start" : "center",
+                px: isOpen ? 2 : 1,
+                transition: "all 0.3s",
+              }}
+              onClick={() => {
+                if (pathname !== item.path) {
+                  router.replace(item.path); // Replace the current URL
+                }
+              }}
+            >
+              {item.icon}
+              {isOpen && <Typography sx={{ ml: 2, fontSize: '0.875rem' }}>{item.title}</Typography>}
+            </ListItemButton>
+          ))}
+        </List>
+
+        <Divider sx={{ flexShrink: 0 }} />
 
         {/* Workspaces Section */}
-        <Box sx={{ px: 1.5, py: 2 }}>
+        <Box sx={{ px: 1.5, py: 2, flexShrink: 0 }}>
           <Box
             sx={{
               display: 'flex',
@@ -193,7 +215,8 @@ const Sidebar = () => {
             )}
           </Box>
 
-          {isWorkspacesExpanded && (
+          {/* Render individual workspaces ONLY if expanded AND sidebar is open */}
+          {isWorkspacesExpanded && isOpen && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {workspaces.map((workspace) => (
                 <CustomButton
@@ -201,18 +224,20 @@ const Sidebar = () => {
                   variant={workspace.id === activeWorkspace?.id ? "primary" : "ghost"}
                   sx={{
                     width: '100%',
-                    justifyContent: 'flex-start',
+                    justifyContent: 'flex-start', // Keep left alignment
                     gap: 2,
                     height: 36,
                     px: 2,
                     textTransform: 'none',
-                    fontSize: '0.875rem'
+                    fontSize: '0.875rem',
+                    overflow: 'hidden', // Prevent content overflow
                   }}
                   onClick={() => {
                     setActiveWorkspace(workspace);
                     router.push('/dashboard/workspace');
                   }}
                 >
+                  {/* Ensure circle doesn't shrink */}
                   <Box sx={{
                     width: 20,
                     height: 20,
@@ -222,111 +247,126 @@ const Sidebar = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'primary.main',
-                    fontSize: '0.75rem'
+                    fontSize: '0.75rem',
+                    flexShrink: 0, // Prevent shrinking
                   }}>
                     {workspace.name.charAt(0)}
                   </Box>
+                  {/* Text only visible when open */}
                   <Typography noWrap sx={{ flex: 1, textAlign: 'left' }}>
                     {workspace.name}
                   </Typography>
                 </CustomButton>
               ))}
 
+              {/* "New Workspace" Button - Text hidden when collapsed */}
               <CustomButton
                 variant="ghost"
                 size="small"
                 sx={{
                   width: '100%',
-                  justifyContent: 'flex-start',
+                  justifyContent: 'flex-start', // Keep left alignment
                   color: 'text.secondary',
                   mt: 1,
-                  textTransform: 'none'
+                  textTransform: 'none',
+                  px: 2, // Match padding
+                  gap: 2, // Match gap
                 }}
                 onClick={() => setIsNewWorkspaceDialogOpen(true)}
               >
-                <Add sx={{ mr: 2, fontSize: 20 }} />
-                New Workspace
+                <Add sx={{ fontSize: 20, flexShrink: 0 }} /> {/* Icon always visible */}
+                {/* Text only visible when open */}
+                <Typography sx={{ fontSize: '0.875rem' }}>
+                  New Workspace
+                </Typography>
               </CustomButton>
             </Box>
           )}
 
-          {/* For collapsed sidebar */}
+          {/* For collapsed sidebar - Show Folder Icon OR Individual Workspace Icons */}
           {!isOpen && (
-            <CustomButton
-              variant="ghost"
-              size="small"
-              sx={{
-                width: '100%',
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: 'auto'
-              }}
-              onClick={() => router.push('/dashboard/workspace')}
-            >
-              <Folder sx={{ fontSize: 25 }} />
-            </CustomButton>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+              {/* Show individual workspace icons when collapsed */}
+              {workspaces.map((workspace) => (
+                 <CustomButton
+                  key={workspace.id}
+                  variant={workspace.id === activeWorkspace?.id ? "primary" : "ghost"}
+                  sx={{
+                    width: 40, // Fixed width for collapsed button
+                    height: 40, // Fixed height
+                    minWidth: 'auto',
+                    p: 0, // Remove padding
+                    borderRadius: '50%', // Make button circular
+                  }}
+                  onClick={() => {
+                    setActiveWorkspace(workspace);
+                    router.push('/dashboard/workspace');
+                  }}
+                  title={workspace.name} // Add tooltip for collapsed state
+                >
+                  {/* Circle takes full button space */}
+                  <Box sx={{
+                    width: 20, // Keep icon size consistent
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'primary.main',
+                    fontSize: '0.75rem',
+                  }}>
+                    {workspace.name.charAt(0)}
+                  </Box>
+                </CustomButton>
+              ))}
+               {/* Collapsed "New Workspace" Button */}
+               <CustomButton
+                variant="ghost"
+                size="small"
+                sx={{
+                  width: 40, // Fixed width
+                  height: 40, // Fixed height
+                  minWidth: 'auto',
+                  p: 0, // Remove padding
+                  borderRadius: '50%', // Make button circular
+                  mt: 1, // Add margin top
+                }}
+                onClick={() => setIsNewWorkspaceDialogOpen(true)}
+                title="New Workspace" // Add tooltip
+              >
+                <Add sx={{ fontSize: 20 }} />
+              </CustomButton>
+            </Box>
           )}
         </Box>
 
-        <Divider />
+        {/* Spacer to push the image to the bottom */}
+        <Box sx={{ flexGrow: 1 }} />
 
-        {/* Navigation Menu */}
-        <List sx={{ overflowY: "auto", justifyContent: "space-around", display: "flex", flexDirection: "column", height: "100%" }}>
-          <Box >
-            {navItems.map((item) => (
-              <ListItemButton
-                key={item.title}
-                selected={pathname === item.path}
-                sx={{
-                  justifyContent: isOpen ? "flex-start" : "center",
-                  px: isOpen ? 2 : 1,
-                  transition: "all 0.3s",
-
-                }}
-                onClick={() => {
-                  if (pathname !== item.path) {
-                    router.replace(item.path); // Replace the current URL
-                  }
-
-                }}
-              >
-                {item.icon}
-                {isOpen && <Typography sx={{ ml: 2 }}>{item.title}</Typography>}
-              </ListItemButton>
-            ))}
-
-          </Box>
-        </List>
-
-        <Divider />
+        {/* Image at the bottom */}
+        <Divider sx={{ flexShrink: 0 }} />
         <Box sx={{
-          diaply: "flex",
-          justifyItems: "center",
+          display: "flex", // Changed from diaply
+          justifyContent: "center", // Center the image
+          alignItems: "center", // Center vertically if needed
+          p: 2, // Add some padding
+          flexShrink: 0, // Prevent shrinking
         }}>
           <Image
             src="/Caze MeTPro AI.png" // Path to the image
             alt="MetProAi Logo"
-            width={150} // Set width
-            height={150} // Set height
+            width={isOpen ? 150 : 50} // Adjust width based on sidebar state
+            height={isOpen ? 150 : 50} // Adjust height based on sidebar state
             priority // Loads image immediately
-            style={{ filter: `drop-shadow(10px 10px 10px #000000)` }}
+            style={{
+              filter: `drop-shadow(5px 5px 5px #000000)`, // Adjusted shadow
+              transition: 'width 0.3s ease-in-out, height 0.3s ease-in-out', // Smooth transition
+            }}
           />
         </Box>
 
-        {/* Settings Button - Future Implementation*/}
-        {/* <Box sx={{ p: 2 }}>
-          <CustomButton
-            fullWidth
-            variant="outline"
-            sx={{ justifyContent: isOpen ? "flex-start" : "center", px: isOpen ? 2 : 1 }}
-            onClick={() => router.push("/settings")}
-          >
-            <SettingsIcon />
-            {isOpen && <Typography sx={{ ml: 2 }}>Settings</Typography>}
-          </CustomButton>
-        </Box> */}
+        {/* Settings Button - Future Implementation (Removed from here) */}
       </Drawer>
 
       {/* Floating Button to Toggle Sidebar (Mobile Only) */}
